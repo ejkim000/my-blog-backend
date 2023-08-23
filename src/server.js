@@ -1,18 +1,5 @@
 import express from 'express';
-
-let articlesInfo = [{
-    name: 'learn-react',
-    upvote:0,
-    comments:[],
-},{
-    name: 'learn-node',
-    upvote:0,
-    comments:[],
-},{
-    name: 'mongodb',
-    upvote:0,
-    comments:[],
-}];
+import { MongoClient } from 'mongodb';
 
 const app = express();
 const PORT = 8000;
@@ -21,9 +8,40 @@ const PORT = 8000;
 app.use(express.json());
 
 // END POINTS
-app.put('/api/articles/:name/upvote', (req, res) => {
+app.get('/api/articles/:name', async (req, res) => {
     const { name } = req.params;
-    const article = articlesInfo.find(a => a.name === name);
+    // connect to mongoDB
+    const client = new MongoClient('mongodb://127.0.0.1:27017');
+    await client.connect();
+    // access to db
+    const db = client.db('react-blog-db'); // in shell > use react-blog-db
+    // select data
+    const article = await db.collection('articles').findOne({ name }); // in shell > db.articles.find({ name: “abcd”})
+
+    if (article) {
+        res.json(article);
+    } else {
+        // res.sendStatus(404).send('Article is not found');
+        res.sendStatus(404);
+    }
+    
+});
+
+// upvote
+app.put('/api/articles/:name/upvote', async (req, res) => {
+    const { name } = req.params;
+
+    const client = new MongoClient('mongodb://127.0.0.1:27017');
+    await client.connect();
+
+    const db = client.db('react-blog-db');
+    await db.collection('articles').updateOne({ name }, {
+        $inc: { upvote: 1 }, // increment "upvotes" by 1
+    })
+
+    // const article = articlesInfo.find(a => a.name === name);
+    const article = await db.collection('articles').findOne({ name })
+    
     if (article) {
         article.upvote += 1;
         res.send(`the ${name} article now has ${article.upvote} upvotes`);
