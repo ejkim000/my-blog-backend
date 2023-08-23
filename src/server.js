@@ -36,6 +36,12 @@ app.get("/api/articles/:name", async (req, res) => {
 app.put("/api/articles/:name/upvote", async (req, res) => {
   const { name } = req.params;
 
+  // connect to mongoDB
+  const client = new MongoClient("mongodb://127.0.0.1:27017");
+  await client.connect();
+  // access to db
+  const db = client.db("react-blog-db"); // in shell > use react-blog-db
+
   await db.collection("articles").updateOne(
     { name },
     {
@@ -43,18 +49,12 @@ app.put("/api/articles/:name/upvote", async (req, res) => {
     }
   );
 
-  
-  // connect to mongoDB
-  const client = new MongoClient("mongodb://127.0.0.1:27017");
-  await client.connect();
-  // access to db
-  const db = client.db("react-blog-db"); // in shell > use react-blog-db
 
   // const article = articlesInfo.find(a => a.name === name);
   const article = await db.collection("articles").findOne({ name });
 
   if (article) {
-    res.send(`the ${name} article now has ${article.upvote} upvotes`);
+    res.json(article);
   } else {
     res.send("The article is not exist");
   }
@@ -65,6 +65,12 @@ app.post("/api/articles/:name/comments", async (req, res) => {
   const { name } = req.params;
   const { postedBy, text } = req.body;
 
+    // connect to mongoDB
+    const client = new MongoClient("mongodb://127.0.0.1:27017");
+    await client.connect();
+    // access to db
+    const db = client.db("react-blog-db"); // in shell > use react-blog-db
+
   await db.collection("articles").updateOne(
     { name },
     {
@@ -73,18 +79,12 @@ app.post("/api/articles/:name/comments", async (req, res) => {
   );
 
   
-  // connect to mongoDB
-  const client = new MongoClient("mongodb://127.0.0.1:27017");
-  await client.connect();
-  // access to db
-  const db = client.db("react-blog-db"); // in shell > use react-blog-db
-  
   // const article = articlesInfo.find(a => a.name === name);
   const article = await db.collection("articles").findOne({ name });
 
   if (article) {
     // article.comments.push({postedBy, text});
-    res.send(article.comments);
+    res.json(article);
   } else {
     res.send("The article is not exist");
   }
